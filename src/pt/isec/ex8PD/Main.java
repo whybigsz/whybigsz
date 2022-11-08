@@ -3,6 +3,7 @@ package pt.isec.ex8PD;
 public class Main {
 
     public static void main(String[] args) {
-	// write your code here
+	    int aux = 3;
+        System.out.println(aux);
     }
 }
