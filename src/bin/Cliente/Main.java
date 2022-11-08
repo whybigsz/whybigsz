@@ -10,7 +10,7 @@ public class Main {
         Scanner sc = new Scanner(System.in);
         boolean flag = true;
 
-        System.out.println("changes");
+        //teste
 
         while (flag == true) {
             System.out.println("\nBem Vindo á Reserva e Compra de Bilhetes!");
