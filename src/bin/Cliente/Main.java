@@ -9,7 +9,7 @@ public class Main {
         Requisitos requisitos = new Requisitos();
         Scanner sc = new Scanner(System.in);
         boolean flag = true;
-
+        //tenta
 
         while (flag == true) {
             System.out.println("\nBem Vindo á Reserva e Compra de Bilhetes!");
