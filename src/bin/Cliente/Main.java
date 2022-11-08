@@ -9,7 +9,11 @@ public class Main {
         Requisitos requisitos = new Requisitos();
         Scanner sc = new Scanner(System.in);
         boolean flag = true;
+<<<<<<< HEAD
         //tenta
+=======
+
+>>>>>>> parent of 4bb31e1... teste
 
         while (flag == true) {
             System.out.println("\nBem Vindo á Reserva e Compra de Bilhetes!");
