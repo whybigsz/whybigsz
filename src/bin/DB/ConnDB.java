@@ -46,12 +46,18 @@ public class ConnDB {
         return -1;
     }
 
-    public void registaNovoUtilizador(String username, String nome, String password, int administrador, int autenticado) throws SQLException {
-        Statement statement = dbConn.createStatement();
+    public boolean registaNovoUtilizador(String username, String nome, String password, int administrador, int autenticado) {
+        try{
+            Statement statement = dbConn.createStatement();
 
-        String sqlQuery = "INSERT INTO utilizador VALUES (NULL,'" + username + "','" + nome + "','" + password + "','" + administrador + "','" + autenticado + "')";
-        statement.executeUpdate(sqlQuery);
-        statement.close();
+            String sqlQuery = "INSERT INTO utilizador VALUES (NULL,'" + username + "','" + nome + "','" + password + "','" + administrador + "','" + autenticado + "')";
+            statement.executeUpdate(sqlQuery);
+            statement.close();
+            return true;
+        }catch (SQLException e){
+            System.out.println("Já Existe um utilizador com esse Username e/ou nome");
+            return false;
+        }
     }
 
 
@@ -68,13 +74,13 @@ public class ConnDB {
                     throw new SQLException();
                 } else {
                     int admin = resultSet.getInt("administrador");
-                    //System.out.println("[" + id + "] " + user + " " + pass + " " + admin);
+                    int id = resultSet.getInt("id");
                     if (admin == 1) {
                         System.out.println("Tentativa de entrada como admin detetada!");
                         statement.close();
                         return false;
                     } else {
-
+                        loginEfetuado(id);
                         System.out.println("Login Efetuado Com Sucesso!");
                         statement.close();
                         return true;
@@ -144,6 +150,22 @@ public class ConnDB {
         return false;
     }
 
+    public void loginEfetuado (int id) throws SQLException {
+        int autent = 1;
+        Statement statement = dbConn.createStatement();
+        String sqlQuery = "UPDATE utilizador SET autenticado='" + autent + "' WHERE id=" + id;
+        statement.executeUpdate(sqlQuery);
+        System.out.println("Está agora autenticado!");
+        statement.close();
+    }
+    public void logoutEfetuado (int id) throws SQLException {
+        int autent = 0;
+        Statement statement = dbConn.createStatement();
+        String sqlQuery = "UPDATE utilizador SET autenticado='" + autent + "' WHERE id=" + id;
+        statement.executeUpdate(sqlQuery);
+        System.out.println("Já nao se encontra autenticado!");
+        statement.close();
+    }
 
     public void editarUsername(int id, String username) throws SQLException {
 
@@ -175,8 +197,10 @@ public class ConnDB {
 
 
     }
+/*
 
-    public void listEspetaculos(String whereDescricao) throws SQLException {
+    */
+/*public void listEspetaculos(String whereDescricao) throws SQLException {
         Statement statement = dbConn.createStatement();
 
         String sqlQuery = "SELECT id, descricao, tipo, data_hora, duracao, local, localidade, pais, classificacao_etaria, visivel FROM espetaculo";
@@ -210,7 +234,8 @@ public class ConnDB {
         String sqlQuery = "INSERT INTO espetaculo VALUES (NULL,'" + descricao + "','" + tipo + "','" + data_hora + "','" + duracao + "','" + local + "','" + localidade + "','" + classificacao_etaria + "','" + visivel + ")";
         statement.executeUpdate(sqlQuery);
         statement.close();
-    }
+    }*//*
+
 
     public void updateUser(int id, String name, String birthdate) throws SQLException {
         Statement statement = dbConn.createStatement();
@@ -229,6 +254,7 @@ public class ConnDB {
         statement.executeUpdate(sqlQuery);
         statement.close();
     }
+*/
 
 
 }
