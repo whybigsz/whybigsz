@@ -1,5 +1,7 @@
 package bin.Servidor;
 
+
+public class Servidor2 {
 import java.io.IOException;
 import java.net.*;
 import java.util.Scanner;
@@ -16,4 +18,5 @@ public class Servidor2 {
             ds.send(dp);
         }
     }
+
 }
