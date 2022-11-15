@@ -18,48 +18,77 @@ public class ConnDB {
             dbConn.close();
     }
 
-    public void registaNovoUtilizador(String username, String nome, String password, int administrador, int autenticado) throws SQLException {
-        Statement statement = dbConn.createStatement();
+    public int getID(String username) {
 
-        String sqlQuery = "INSERT INTO utilizador VALUES (NULL,'" + username + "','" + nome + "','" + password + "','" + administrador + "','" + autenticado + "')";
-        statement.executeUpdate(sqlQuery);
-        statement.close();
-    }
-
-
-    public boolean loginUtilizador(String username, String password) {
-        Statement statement = null;
         try {
-            statement = dbConn.createStatement();
-            String sqlQuery = "SELECT id, username, nome, password, administrador, autenticado  FROM utilizador";
-            if (username != null && password != null) {
-                sqlQuery += " WHERE username = '" + username + "' AND password = '" + password + "'";
+            Statement statement = dbConn.createStatement();
+            String sqlQuery = "Select id, username, nome, password, administrador, autenticado FROM utilizador";
+            if (username != null) {
+                sqlQuery += " WHERE username ='" + username + "'";
                 ResultSet resultSet = statement.executeQuery(sqlQuery);
-                if (resultSet.next() == false) {
-                    System.out.println("Login Incorreto!");
+                if (!resultSet.next()) {
+                    System.out.println("Erro no getID (username nao existe)");
+                    statement.close();
                     throw new SQLException();
                 } else {
 
                     int id = resultSet.getInt("id");
-                    String user = resultSet.getString("username");
-                    String pass = resultSet.getString("password");
-                    int admin = resultSet.getInt("administrador");
-                    //System.out.println("[" + id + "] " + user + " " + pass + " " + admin);
-                    if(admin == 1){
-                        System.out.println("Tentativa de entrada como admin detetada!");
-                        return false;
-                    }
-                    else{
+                    System.out.println("[" + id + "] ");
+                    statement.close();
+                    return id;
+                }
+            }
+        } catch (SQLException ex) {
+            System.out.println("Erro no getID!");
+            return -1;
+        }
 
+        return -1;
+    }
+
+    public boolean registaNovoUtilizador(String username, String nome, String password, int administrador, int autenticado) {
+        try{
+            Statement statement = dbConn.createStatement();
+
+            String sqlQuery = "INSERT INTO utilizador VALUES (NULL,'" + username + "','" + nome + "','" + password + "','" + administrador + "','" + autenticado + "')";
+            statement.executeUpdate(sqlQuery);
+            statement.close();
+            return true;
+        }catch (SQLException e){
+            System.out.println("Já Existe um utilizador com esse Username e/ou nome");
+            return false;
+        }
+    }
+
+
+    public boolean loginUtilizador(String username, String password) {
+
+        try {
+            Statement statement = dbConn.createStatement();
+            String sqlQuery = "SELECT id, username, nome, password, administrador, autenticado  FROM utilizador";
+            if (username != null && password != null) {
+                sqlQuery += " WHERE username = '" + username + "' AND password = '" + password + "'";
+                ResultSet resultSet = statement.executeQuery(sqlQuery);
+                if (!resultSet.next()) {
+                    System.out.println("Login Incorreto!");
+                    throw new SQLException();
+                } else {
+                    int admin = resultSet.getInt("administrador");
+                    int id = resultSet.getInt("id");
+                    if (admin == 1) {
+                        System.out.println("Tentativa de entrada como admin detetada!");
+                        statement.close();
+                        return false;
+                    } else {
+                        loginEfetuado(id);
                         System.out.println("Login Efetuado Com Sucesso!");
+                        statement.close();
                         return true;
                     }
                 }
 
-
             }
-        } catch (
-                SQLException e) {
+        } catch (SQLException e) {
             System.out.println("Excecao lançada (login)");
             return false;
         }
@@ -77,39 +106,43 @@ public class ConnDB {
     }
 
     public boolean loginAdmin(String username, String password) {
-        Statement statement = null;
         try {
-            statement = dbConn.createStatement();
+            Statement statement = dbConn.createStatement();
             String sqlQuery = "SELECT id, username, nome, password, administrador, autenticado  FROM utilizador";
-            if (username.equals("admin")  && password.equals("admin")) {
+            if (username.equals("admin") && password.equals("admin")) {
                 sqlQuery += " WHERE username = '" + username + "' AND password = '" + password + "'";
                 ResultSet resultSet = statement.executeQuery(sqlQuery);
-                if (resultSet.next() == false) {
+                if (!resultSet.next()) {
                     System.out.println("Login Incorreto!");
                     throw new SQLException();
                 } else {
-                    int id = resultSet.getInt("id");
+                    /*int id = resultSet.getInt("id");
                     String user = resultSet.getString("username");
-                    String pass = resultSet.getString("password");
+                    String pass = resultSet.getString("password");*/
                     int admin = resultSet.getInt("administrador");
                     //System.out.println("[" + id + "] " + user + " " + pass + " " + admin);
-                    if(admin == 1){
+
+                    resultSet.close();
+
+                    if (admin == 1) {
                         System.out.println("Bem Vindo, Está agora ligado na conta de Administrador!!");
+                        statement.close();
                         return true;
-                    }
-                    else{
+                    } else {
 
                         System.out.println("Login na conta de Administrador falhada!");
+                        statement.close();
                         return false;
                     }
+
                 }
 
-
-            }else{
+            } else {
                 System.out.println("Credencias de Administrador Erradas");
+                statement.close();
             }
-        } catch (
-                SQLException e) {
+
+        } catch (SQLException e) {
             System.out.println("Excecao lançada (login)");
             return false;
         }
@@ -117,8 +150,57 @@ public class ConnDB {
         return false;
     }
 
+    public void loginEfetuado (int id) throws SQLException {
+        int autent = 1;
+        Statement statement = dbConn.createStatement();
+        String sqlQuery = "UPDATE utilizador SET autenticado='" + autent + "' WHERE id=" + id;
+        statement.executeUpdate(sqlQuery);
+        System.out.println("Está agora autenticado!");
+        statement.close();
+    }
+    public void logoutEfetuado (int id) throws SQLException {
+        int autent = 0;
+        Statement statement = dbConn.createStatement();
+        String sqlQuery = "UPDATE utilizador SET autenticado='" + autent + "' WHERE id=" + id;
+        statement.executeUpdate(sqlQuery);
+        System.out.println("Já nao se encontra autenticado!");
+        statement.close();
+    }
 
-    public void listEspetaculos(String whereDescricao) throws SQLException {
+    public void editarUsername(int id, String username) throws SQLException {
+
+            Statement statement = dbConn.createStatement();
+            String sqlQuery = "UPDATE utilizador SET username='" + username + "' WHERE id=" + id;
+            statement.executeUpdate(sqlQuery);
+            System.out.println("Username alterado com sucesso!");
+            statement.close();
+
+
+    }
+    public void editarNome(int id, String nome) throws SQLException {
+
+        Statement statement = dbConn.createStatement();
+        String sqlQuery = "UPDATE utilizador SET nome='" + nome + "' WHERE id=" + id;
+        statement.executeUpdate(sqlQuery);
+        System.out.println("Nome alterado com sucesso!");
+        statement.close();
+
+
+    }
+    public void editarPassword(int id, String password) throws SQLException {
+
+        Statement statement = dbConn.createStatement();
+        String sqlQuery = "UPDATE utilizador SET password='" + password + "' WHERE id=" + id;
+        statement.executeUpdate(sqlQuery);
+        System.out.println("Password alterada com sucesso!");
+        statement.close();
+
+
+    }
+/*
+
+    */
+/*public void listEspetaculos(String whereDescricao) throws SQLException {
         Statement statement = dbConn.createStatement();
 
         String sqlQuery = "SELECT id, descricao, tipo, data_hora, duracao, local, localidade, pais, classificacao_etaria, visivel FROM espetaculo";
@@ -152,7 +234,8 @@ public class ConnDB {
         String sqlQuery = "INSERT INTO espetaculo VALUES (NULL,'" + descricao + "','" + tipo + "','" + data_hora + "','" + duracao + "','" + local + "','" + localidade + "','" + classificacao_etaria + "','" + visivel + ")";
         statement.executeUpdate(sqlQuery);
         statement.close();
-    }
+    }*//*
+
 
     public void updateUser(int id, String name, String birthdate) throws SQLException {
         Statement statement = dbConn.createStatement();
@@ -163,6 +246,7 @@ public class ConnDB {
         statement.close();
     }
 
+
     public void deleteUser(int id) throws SQLException {
         Statement statement = dbConn.createStatement();
 
@@ -170,6 +254,7 @@ public class ConnDB {
         statement.executeUpdate(sqlQuery);
         statement.close();
     }
+*/
 
 
 }
