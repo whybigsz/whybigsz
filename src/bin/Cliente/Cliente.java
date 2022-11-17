@@ -1,6 +1,7 @@
 package bin.Cliente;
 
 import bin.Servidor.ServerInfo;
+import bin.Servidor.ServerList;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -9,33 +10,37 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Cliente {
-/*
+    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 
-    private ArrayList<String> endIPS;
-    private ArrayList<String> portos;
-*/
-
-
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
-
+        int Port = 4001;
         DatagramSocket ds = new DatagramSocket();
-
         ds.setBroadcast(true);
 
-        String pedido = " ";
-
-        DatagramPacket dp = new DatagramPacket(pedido.getBytes(), pedido.length(), InetAddress.getLocalHost(), 4005);
+        String pedido = "Ola Quero ligar-me";
+        DatagramPacket dp = new DatagramPacket(pedido.getBytes(), pedido.length(), InetAddress.getLocalHost(), 4001);
         ds.send(dp);
         while (true) {
             dp = new DatagramPacket(new byte[256], 256);
             ds.receive(dp);
-            System.out.println("Aqui");
+
             ByteArrayInputStream bais = new ByteArrayInputStream(dp.getData());
             ObjectInputStream ois = new ObjectInputStream(bais);
-            ServerInfo si = (ServerInfo) ois.readObject();
-            System.out.println(si);
+            ServerList msgRec = (ServerList) ois.readObject();
+
+            System.out.println("Received: " + msgRec.getList() + " from "
+                    + dp.getAddress().getHostAddress() + ":" + dp.getPort());
+            List <ServerInfo> lst = msgRec.getList();
+            int port;
+            String ip;
+            for(int i = 0; i < 3; i++){
+                ip = lst.get(i).getIp();
+                port = lst.get(i).getPort();
+
+                System.out.println("ip: "+ ip + ", port: "+ port);
+            }
         }
 
 
@@ -56,4 +61,10 @@ public class Cliente {
 //        System.out.println(msg);
 
     }
+
+//    public static Object deserialize(byte[] data) throws IOException, ClassNotFoundException {
+//        ByteArrayInputStream in = new ByteArrayInputStream(data);
+//        ObjectInputStream is = new ObjectInputStream(in);
+//        return is.readObject();
+//    }
 }

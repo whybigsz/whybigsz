@@ -1,140 +1,88 @@
 package bin.Servidor;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Servidor {
-//    private ArrayList<String> endIPS;
-//    private ArrayList<String> portos;
 
-    public static void main(String[] args) throws IOException {
-        Servidor s = new Servidor();
-        s.startServer();
+    public static void main(String[] args) throws IOException, InterruptedException {
+        //Inicio do Servidor
+        //1-Receber nos Argumentos um Porto de escuta onde aguarda por contactos de clientes
+        //2-E o caminho da diretoria de armazenamento da BASE DE DADOS
+        ThreadGroup parent = new ThreadGroup("Servidores");
+        ArrayList<Thread> allServers = new ArrayList<>();
+        List<ServerInfo> listServers = new ArrayList<>();
+        ServerList sl = new ServerList(listServers);
+        Thread t1 = new Thread ( parent, new ThreadServer(Integer.parseInt(args[0]), args[1], sl) );
+        Thread t = new Thread(t1);
+        t.start();
+        allServers.add(t);
+
+        for(Thread th : allServers)
+            t.join();
 
     }
 
-    void startServer() throws IOException {
-        MulticastSocket ms = new MulticastSocket(4004);
-        DatagramSocket ds = new DatagramSocket(4005);
-        ds.setBroadcast(true);
-        ServerSocket ss = new ServerSocket(0);
-        ArrayList<ServerInfo> allServers = new ArrayList<>();
-        InetAddress ipGroup = InetAddress.getByName("239.39.39.39");
-        SocketAddress sa = new InetSocketAddress(ipGroup, 4004);
-        NetworkInterface ni = NetworkInterface.getByName("wlp10s0f0");
-        ms.joinGroup(sa, ni);
-        ServerInfo si = new ServerInfo(String.valueOf(ss.getInetAddress()), String.valueOf(ss.getLocalPort()));
-        RecebeHeardBeats rhb = new RecebeHeardBeats(ms, ss);
-        EnviaHeardBeats ehb = new EnviaHeardBeats(ms, ss);
-        rhb.start();
-        ehb.start();
-        allServers.add(si);
-        AtendeClientes ac = new AtendeClientes(ds, ss, allServers);
-        ac.start();
-    }
+//    public static byte[] serialize(Object obj) throws IOException {
+//        ByteArrayOutputStream out = new ByteArrayOutputStream();
+//        ObjectOutputStream os = new ObjectOutputStream(out);
+//        os.writeObject(obj);
+//        return out.toByteArray();
+//    }
 
 
-    public class AtendeClientes extends Thread {
-        DatagramSocket ds;
+    void startServer(int Port, String caminho, ServerList sl) throws IOException {
 
-        ServerSocket ss;
-        ArrayList<ServerInfo> siList;
+        InetAddress ipServer = InetAddress.getByName("127.0.0.1");
 
-        public AtendeClientes(DatagramSocket ds, ServerSocket ss, ArrayList<ServerInfo> siList) {
-            this.ds = ds;
-            this.ss = ss;
-            this.siList = siList;
+        ServerInfo si = new ServerInfo(ipServer.getHostAddress(), Port);
+        sl.addServer(si);
+
+        try {
+            MulticastSocket ms = new MulticastSocket(Port);
+            //Adiciona o servidor á lista de servers ativos!
+            //Aguarda por contactos de clientes no porto de Escuta UDP
+            AguardaContactoClientes acc = new AguardaContactoClientes(ms, sl);
+            acc.start();
+            //Aguarda continuamente pela receção de datagramas UDP enviados para
+            // o porto 4004 e endereço de multicast 239.39.39.39
+            int msPort = 4004;
+            String msEndereco = "239.39.39.39";
+//             MulticastSocket ms = new MulticastSocket(msPort);
+//             ms.setBroadcast(true);
+            //Tambem aguarda continuamente por pedidos de ligaçao TCP num porto Automatico (0)
+            ServerSocket ss = new ServerSocket(0);
+
+            AtendeClientes ac = new AtendeClientes(ms, ss);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
-        @Override
-        public void run() {
-            try {
-                byte[] MAX_DATA;
-                InetAddress addr;
-                while (true) {
-                    DatagramPacket dpRec = new DatagramPacket(new byte[256], 256);
-                    ds.receive(dpRec);
-                    String pedido = new String(dpRec.getData(), 0, dpRec.getLength());
-                    if (pedido.equals(" ")) {
-                        addr = dpRec.getAddress();
-                        System.out.println(addr);
-                        break;
-                    }
-                }
+//        AtendeClientes ac = new AtendeClientes(ds, ss, allServers);
+//        ac.start();
 
-                for (ServerInfo si : siList) {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    ObjectOutputStream oos = new ObjectOutputStream(baos);
-                    oos.writeObject(si);
-                    MAX_DATA = baos.toByteArray();
-                    DatagramPacket dpSend = new DatagramPacket(MAX_DATA, MAX_DATA.length, addr, 4005);
-                    ds.send(dpSend);
-                    System.out.println("server");
-                }
-//                    Socket connectionSocket = ss.accept();
-//                    ObjectOutputStream oos = new ObjectOutputStream(connectionSocket.getOutputStream());
-//                    oos.writeObject(siList);
-            } catch (Exception e) {
-                System.out.println("Exception!");
-            }
-        }
-    }
 
-    public class RecebeHeardBeats extends Thread {
+        //Depois da fase de Arranque, um servidor envia, a cada 10s, uma mensagem de heartbeat
+        //para o porto 4004 do endereço de multicast 239.39.39.39
 
-        MulticastSocket ms;
-        ServerSocket ss;
 
-        public RecebeHeardBeats(MulticastSocket ms, ServerSocket ss) {
-            this.ms = ms;
-            this.ss = ss;
-        }
-
-        @Override
-        public void run() {
-            try {
-                while (true) {
-                    DatagramPacket dp = new DatagramPacket(new byte[256], 256);
-                    ms.receive(dp);
-                    String rec = new String(dp.getData(), 0, dp.getLength());
-                    if (Integer.parseInt(rec) != ss.getLocalPort())
-                        System.out.println(rec);
-
-                }
-            } catch (IOException e) {
-                System.out.println("Exceção run");
-            }
-        }
-    }
-
-    public class EnviaHeardBeats extends Thread {
-
-        MulticastSocket ms;
-        ServerSocket ss;
-        InetAddress ipGroup;
-
-        public EnviaHeardBeats(MulticastSocket ms, ServerSocket ss) throws UnknownHostException {
-            this.ms = ms;
-            this.ss = ss;
-            this.ipGroup = InetAddress.getByName("239.39.39.39");
-        }
-
-        @Override
-        public void run() {
-            try {
-                while (true) {
-                    String hb = String.valueOf(ss.getLocalPort());
-                    DatagramPacket dp = new DatagramPacket(hb.getBytes(), hb.length(), ipGroup, 4004);
-                    ms.send(dp);
-                    Thread.sleep(10000);
-                }
-            } catch (Exception e) {
-                System.out.println("Exceção run");
-            }
-        }
+//
+//        DatagramSocket ds = new DatagramSocket(Integer.parseInt(args[0]));
+//        ds.setBroadcast(true);
+//        ArrayList<ServerInfo> allServers = new ArrayList<>();
+//        InetAddress ipGroup = InetAddress.getByName("239.39.39.39");
+//        SocketAddress sa = new InetSocketAddress(ipGroup, 4004);
+//        NetworkInterface ni = NetworkInterface.getByName("wlp10s0f0");
+//        ms.joinGroup(sa, ni);
+//        ServerInfo si = new ServerInfo(String.valueOf(ss.getInetAddress()), String.valueOf(ss.getLocalPort()));
+//        RecebeHeardBeats rhb = new RecebeHeardBeats(ms, ss);
+//        EnviaHeardBeats ehb = new EnviaHeardBeats(ms, ss);
+//        rhb.start();
+//        ehb.start();
+//        allServers.add(si);
+//        System.out.println(allServers);
     }
 
 }

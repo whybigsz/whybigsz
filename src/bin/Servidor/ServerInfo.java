@@ -1,27 +1,33 @@
 package bin.Servidor;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 
-public class ServerInfo implements Serializable {
+public class ServerInfo  implements Serializable{
 
-    String ip,port;
+    private String ip;
+    private int Port;
 
-    public ServerInfo(String ip, String port) {
+
+    public ServerInfo(String ip, int port) {
         this.ip = ip;
-        this.port = port;
+        this.Port = port;
     }
 
-   /* public String getIp() {
+    public String getIp() {
         return ip;
     }
 
-    public String getPort() {
-        return port;
+    public int getPort() {
+        return Port;
     }
-*/
+
     @Override
     public String toString() {
-        return
-                "ip: " + ip + " port: " + port;
+        return "ServerInfo: " +
+                "IP: " + ip +
+                ", Port= " + Port +
+                '}';
     }
 }
+
