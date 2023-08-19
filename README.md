@@ -4,9 +4,9 @@
 
 - 🔭 Atualmente estou a fazer uma aplicação para melhorar as habilidades sociais **Game Tight**
 
-- 📫 How to reach me **ricardo.ferreira.2222@gmail.com**
+- 📫 Email **ricardo.ferreira.2222@gmail.com**
 
-- ⚡ Fun fact **Faço tiktoks**
+- ⚡ Facto Engraçado: **Faço tiktoks**
 
 <h3 align="left">Redes sociais:</h3>
 <p align="left">
