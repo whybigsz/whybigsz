@@ -2,7 +2,7 @@
 <h3 align="center">Desenvolvimento de Aplicações 🔥</h3>
 <img align="right" alt="Coding" width="300" src="https://raw.githubusercontent.com/whybigsz/whybigsz/main/3dgifmaker38688.gif">
 
-- 🔭 Atualmente estou a fazer uma aplicação para melhorar as habilidades sociais **Game Tight**
+- 🔭 Atualmente estou a construir um site e-commerce para produtos personalizados em 3D
 
 - 📫 Email **ricardo.ferreira.2222@gmail.com**
 
